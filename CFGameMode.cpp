@@ -42,7 +42,7 @@ void ACFGameMode::Tick(float DeltaTime)
 				SetLBScore();
 			else if (bGetScore && !bSetScore)
 					GetLBScores();
-			if(g_SteamLeaderboards->bLeaderboardScoresFound)
+			if(g_SteamLeaderboards->bLeaderboardScoresFound && g_SteamLeaderboards->bLeaderboardScoreUserFound)
 					LeaderboardScoresFound_Implementation(Scores);
 		}
 	}
@@ -78,8 +78,8 @@ void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& s
 		if (g_SteamLeaderboards) {
 			FScorePackage ThisScore;
 			TArray<FScorePackage> Scores;
-			Scores.Init(ThisScore, NumberOfScores);
-			for (int i = 0; i < NumberOfScores; i++)
+			Scores.Init(ThisScore, NumberOfScores+1);
+			for (int i = 0; i <= NumberOfScores; i++)
 			{		
 				LeaderboardEntry_t LBRow = g_SteamLeaderboards->m_leaderboardEntries[i];
 				ThisScore.PlayerName = SteamFriends()->GetFriendPersonaName(LBRow.m_steamIDUser);
@@ -95,7 +95,10 @@ void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& s
 
 				Scores[i] = ThisScore;
 			}
-			g_SteamLeaderboards->bLeaderboardScoresFound = false;
+			g_SteamLeaderboards->bLeaderboardScoresFound = false; 
+			g_SteamLeaderboards->bLeaderboardScoreUserFound = false;
+			if (Scores[0].Rank > 8)
+				Scores[NumberOfScores] = Scores[0];
 			LeaderboardScoresFound(Scores);
 		}
 	}
@@ -140,8 +143,16 @@ void ACFGameMode::GetLBScores()
 	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Green, name);
 	if (SteamAPI_Init()) {
 		if (g_SteamLeaderboards) {
-			g_SteamLeaderboards->DownloadScores(NumberOfScores);
+			g_SteamLeaderboards->DownloadScoreUser();
+
+			//skip the rest of the list if only current player is called
+			if (NumberOfScores > 1)
+				g_SteamLeaderboards->DownloadScores(NumberOfScores);
+			else
+				g_SteamLeaderboards->bLeaderboardScoresFound = true;
+
 			bGetScore = false;
+
 		}
 	}
 }

@@ -3,6 +3,7 @@
 #include "CF_4_13test.h"
 #include "CSteamLeaderboards.h"
 
+
 CSteamLeaderboards::CSteamLeaderboards() :
 	m_CurrentLeaderboard(NULL),
 	m_nLeaderboardEntries(0)
@@ -133,13 +134,49 @@ void CSteamLeaderboards::OnDownloadScore(LeaderboardScoresDownloaded_t *pCallbac
 	if (!bIOFailure)
 	{
 
-		m_nLeaderboardEntries = FMath::Min(pCallback->m_cEntryCount, 10);
+		m_nLeaderboardEntries = FMath::Min((pCallback->m_cEntryCount+1), 9);
 
-		for (int index = 0; index < m_nLeaderboardEntries; index++)
+		for (int index = 0; index <= m_nLeaderboardEntries; index++)
 		{
 			SteamUserStats()->GetDownloadedLeaderboardEntry(
-				pCallback->m_hSteamLeaderboardEntries, index, &m_leaderboardEntries[index], NULL, 0);
+				pCallback->m_hSteamLeaderboardEntries, index, &m_leaderboardEntries[index+1], NULL, 0);
 		}
 		bLeaderboardScoresFound = true;
+	}
+}
+
+
+
+bool CSteamLeaderboards::DownloadScoreUser()
+{
+	const char* name = "DownloadScoresUser Called";
+	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, name);
+
+	if (!m_CurrentLeaderboard)
+		return false;
+
+	// load the current user score must be array although there is only one in this case
+	CSteamID* users = new CSteamID[1];
+	users[0] = SteamUser()->GetSteamID();
+
+	SteamAPICall_t hSteamAPICall = SteamUserStats()->DownloadLeaderboardEntriesForUsers(m_CurrentLeaderboard, users, 1);
+
+	m_callResultDownloadScoreUser.Set(hSteamAPICall, this,
+		&CSteamLeaderboards::OnDownloadScoreUser);
+
+	return true;
+}
+
+void CSteamLeaderboards::OnDownloadScoreUser(LeaderboardScoresDownloaded_t *pCallback, bool bIOFailure)
+{
+	const char* name = "OnDownloadScoreUser Called";
+	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, name);
+
+	if (!bIOFailure)
+	{	
+			SteamUserStats()->GetDownloadedLeaderboardEntry(
+				pCallback->m_hSteamLeaderboardEntries, 0, &m_leaderboardEntries[0], NULL, 0);
+
+		bLeaderboardScoreUserFound = true;
 	}
 }
