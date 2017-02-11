@@ -17,7 +17,7 @@ void CSteamLeaderboards::FindLeaderboard(const char *pchLeaderboardName)
 
 	m_CurrentLeaderboard = NULL;
 
-	SteamAPICall_t hSteamAPICall = SteamUserStats()->FindLeaderboard(pchLeaderboardName);
+	SteamAPICall_t hSteamAPICall = SteamUserStats()->FindOrCreateLeaderboard(pchLeaderboardName, k_ELeaderboardSortMethodDescending, k_ELeaderboardDisplayTypeNumeric);
 	m_callResultFindLeaderboard.Set(hSteamAPICall, this,
 		&CSteamLeaderboards::OnFindLeaderboard);
 }
