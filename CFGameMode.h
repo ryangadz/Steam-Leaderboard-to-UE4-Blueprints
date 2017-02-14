@@ -23,6 +23,7 @@ private:
 	int ScoresAhead = 0;
 	int NumberOfScores = 0;
 	bool bGetScore = false;
+	bool bGlobal = true;
 	TArray<FScorePackage> Scores;
 
 
@@ -40,7 +41,7 @@ public:
 	void SetLBScore();
 
 	UFUNCTION(BlueprintCallable, Category = "SteamFunctions")
-		void GetLeaderboardScore(int numberOfScores);
+		void GetLeaderboardScore(int numberOfScores, bool global);
 
 	void GetLBScores();
 
@@ -52,8 +53,11 @@ public:
         virtual void LeaderboardFound_Implementation(int num);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SteamFunctions")
-		void LeaderboardScoresFound(const TArray<FScorePackage>& scores);
-	    virtual void LeaderboardScoresFound_Implementation(TArray<FScorePackage>& scores);
+		void LeaderboardScoresFound(const TArray<FScorePackage>& scores, bool global);
+	    virtual void LeaderboardScoresFound_Implementation(TArray<FScorePackage>& scores, bool global);
+
+	UFUNCTION(BlueprintCallable, Category = "SteamFunctions")
+		void SteamAPI_Shutdown();
 
 	CSteamLeaderboards* g_SteamLeaderboards = NULL;
 

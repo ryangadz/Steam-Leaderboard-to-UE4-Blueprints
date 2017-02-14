@@ -43,7 +43,7 @@ void ACFGameMode::Tick(float DeltaTime)
 			else if (bGetScore && !bSetScore)
 					GetLBScores();
 			if(g_SteamLeaderboards->bLeaderboardScoresFound && g_SteamLeaderboards->bLeaderboardScoreUserFound)
-					LeaderboardScoresFound_Implementation(Scores);
+					LeaderboardScoresFound_Implementation(Scores, bGlobal);
 		}
 	}
 }
@@ -54,6 +54,12 @@ void ACFGameMode::SetLeaderboardName(FString LeaderboardName)
 	if (SteamAPI_Init()) {
 		if (g_SteamLeaderboards)
 		{
+			//if (LBName != "") {
+			//	delete g_SteamLeaderboards;
+			//	g_SteamLeaderboards = new CSteamLeaderboards();
+			//}
+			g_SteamLeaderboards->bLeaderboardFound = false;
+			bLeaderboardFound = false;
 			LBName = LeaderboardName;
 			const char *chaLBName = TCHAR_TO_ANSI(*LBName);
 			g_SteamLeaderboards->FindLeaderboard(chaLBName);
@@ -72,12 +78,13 @@ void ACFGameMode::LeaderboardFound_Implementation(int num)
 
 
 // you will want to adjust this depending on what scores you want to show in your game
-void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& scores)
+void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& scores, bool global)
 {
 	if (SteamAPI_Init()) {
 		if (g_SteamLeaderboards) {
 			FScorePackage ThisScore;
-			TArray<FScorePackage> Scores;
+			bool FullBoard = true;
+		//	TArray<FScorePackage> Scores;
 			Scores.Init(ThisScore, NumberOfScores+1);
 			for (int i = 0; i <= NumberOfScores; i++)
 			{		
@@ -87,6 +94,7 @@ void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& s
 					ThisScore.PlayerName = "---";
 					ThisScore.Rank = -1; //just looks cleaner 
 					ThisScore.Score = 0;
+					FullBoard = false;
 				}
 				else {
 					ThisScore.Rank = LBRow.m_nGlobalRank;
@@ -97,10 +105,19 @@ void ACFGameMode::LeaderboardScoresFound_Implementation(TArray<FScorePackage>& s
 			}
 			g_SteamLeaderboards->bLeaderboardScoresFound = false; 
 			g_SteamLeaderboards->bLeaderboardScoreUserFound = false;
-			if (Scores[0].Rank > 8)
+
+			if (Scores[0].Rank > 8 && FullBoard)
 				Scores[NumberOfScores] = Scores[0];
-			LeaderboardScoresFound(Scores);
+			LeaderboardScoresFound(Scores, bGlobal);
 		}
+	}
+}
+
+void ACFGameMode::SteamAPI_Shutdown()
+{
+	if (SteamAPI_Init()) {
+		if (g_SteamLeaderboards)
+			delete g_SteamLeaderboards;
 	}
 }
 
@@ -128,8 +145,9 @@ void ACFGameMode::SetLBScore()
 }
 
 //Blueprint node gets range of scores needed
-void ACFGameMode::GetLeaderboardScore(int numberOfScores)
+void ACFGameMode::GetLeaderboardScore(int numberOfScores, bool global)
 {
+	bGlobal = global;
 	const char* name = "GetLeaderboardScore Called";
 	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Green, name);
 	NumberOfScores = numberOfScores;
@@ -147,7 +165,7 @@ void ACFGameMode::GetLBScores()
 
 			//skip the rest of the list if only current player is called
 			if (NumberOfScores > 1)
-				g_SteamLeaderboards->DownloadScores(NumberOfScores);
+				g_SteamLeaderboards->DownloadScores(NumberOfScores, bGlobal);
 			else
 				g_SteamLeaderboards->bLeaderboardScoresFound = true;
 

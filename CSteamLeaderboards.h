@@ -19,8 +19,9 @@ public:
 	~CSteamLeaderboards() {};
 
 	void FindLeaderboard(const char *pchLeaderboardName);
+	int NumberOfScores = 1; 
 	bool UploadScore(int score);
-	bool DownloadScores(int numberOfScores);
+	bool DownloadScores(int numberOfScores, bool global);
 	bool bLeaderboardFound = false;
 	bool bLeaderboardScoresFound = false;
 	bool DownloadScoreUser();

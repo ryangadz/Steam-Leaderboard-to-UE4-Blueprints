@@ -108,7 +108,7 @@ void CSteamLeaderboards::OnUploadScore(LeaderboardScoreUploaded_t *pCallback, bo
 }
 
 
-bool CSteamLeaderboards::DownloadScores(int NumberOfScores)
+bool CSteamLeaderboards::DownloadScores(int numberOfScores, bool global)
 {
 	const char* name = "DownloadScores Called";
 	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Blue, name);
@@ -116,9 +116,16 @@ bool CSteamLeaderboards::DownloadScores(int NumberOfScores)
 	if (!m_CurrentLeaderboard)
 		return false;
 
-	// load the specified leaderboard data from first to number of places
-	SteamAPICall_t hSteamAPICall = SteamUserStats()->DownloadLeaderboardEntries(
-		m_CurrentLeaderboard, k_ELeaderboardDataRequestGlobal, 1, NumberOfScores);
+	SteamAPICall_t hSteamAPICall;
+	NumberOfScores = numberOfScores;
+	if (global)
+
+		// load the specified leaderboard data from first to number of places
+		hSteamAPICall = SteamUserStats()->DownloadLeaderboardEntries(
+			m_CurrentLeaderboard, k_ELeaderboardDataRequestGlobal, 1, NumberOfScores);
+	else 
+		hSteamAPICall = SteamUserStats()->DownloadLeaderboardEntries(
+			m_CurrentLeaderboard, k_ELeaderboardDataRequestFriends, 1, NumberOfScores);
 
 	m_callResultDownloadScore.Set(hSteamAPICall, this,
 		&CSteamLeaderboards::OnDownloadScore);
@@ -133,10 +140,10 @@ void CSteamLeaderboards::OnDownloadScore(LeaderboardScoresDownloaded_t *pCallbac
 
 	if (!bIOFailure)
 	{
+		m_nLeaderboardEntries = NumberOfScores;
+		//m_nLeaderboardEntries = FMath::Min((pCallback->m_cEntryCount+1), 9);
 
-		m_nLeaderboardEntries = FMath::Min((pCallback->m_cEntryCount+1), 9);
-
-		for (int index = 0; index <= m_nLeaderboardEntries; index++)
+		for (int index = 0; index < m_nLeaderboardEntries; index++)
 		{
 			SteamUserStats()->GetDownloadedLeaderboardEntry(
 				pCallback->m_hSteamLeaderboardEntries, index, &m_leaderboardEntries[index+1], NULL, 0);
